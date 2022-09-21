@@ -1,3 +1,8 @@
+#scatman {
+  background-color: rgb(255, 238, 193);
+  width: 300px;
+}
+
 button {
   height: 30px;
   width: 50px;

@@ -1,7 +1,7 @@
 // background.js
 
 let color = '#3aa757';
-let currentUser = 'tio574';
+let currentUser = '';
 let db = null;
 let artists = [
   {
@@ -77,162 +77,26 @@ const artistData = [
   }
 ]
 
-// ::
-// Copying from https://anobjectisa.com/?p=105
-// ::
-function create_database() {
-  const request = indexedDB.open(dbName);
-
-  request.onerror = function (event) {
-    console.log("Problem opening DB.");
-  }
-
-  request.onupgradeneeded = function (event) {
-    db = event.target.result;
-
-    let objectStore = db.createObjectStore('artists', {
-      keyPath: 'uid',
-    });
-
-    objectStore.transaction.oncomplete = function (event) {
-      console.log("ObjectStore Created.");
-    }
-  }
-
-  request.onsuccess = function (event) {
-    db = event.target.result;
-    console.log("DB OPENED.");
-    insert_records(artists);
-
-    db.onerror = function (event) {
-      console.log("FAILED TO OPEN DB.")
-    }
-  }
-}
-
-function insert_records(artists) {
-  if (db) {
-    const insert_transaction = db.transaction("artists", "readwrite");
-    const objectStore = insert_transaction.objectStore("artists");
-
-    return new Promise((resolve, reject) => {
-      insert_transaction.oncomplete = function () {
-        console.log("ALL INSERT TRANSACTIONS COMPLETE.");
-        resolve(true);
-      }
-
-      insert_transaction.onerror = function () {
-        console.log("PROBLEM INSERTING RECORDS.")
-        resolve(false);
-      }
-
-      artists.forEach(artist => {
-        let request = objectStore.add(artist);
-
-        request.onsuccess = function () {
-          console.log("Added: ", artist);
-        }
-      });
-    });
-  }
-}
-
-function get_record(uid) {
-  console.log("Getting record for: ", uid);
-  if (db) {
-    const get_transaction = db.transaction("artists", "readonly");
-    const objectStore = get_transaction.objectStore("artists");
-
-    return new Promise((resolve, reject) => {
-      get_transaction.oncomplete = function () {
-        console.log("ALL GET TRANSACTIONS COMPLETE.");
-      }
-
-      get_transaction.onerror = function () {
-        console.log("PROBLEM GETTING RECORDS.")
-      }
-
-      let request = objectStore.get(uid);
-
-      request.onsuccess = function (event) {
-        resolve(event.target.result);
-      }
-    });
-  }
-}
-
-function update_record(record) {
-  if (db) {
-    const put_transaction = db.transaction("artists", "readwrite");
-    const objectStore = put_transaction.objectStore("artists");
-
-    return new Promise((resolve, reject) => {
-      put_transaction.oncomplete = function () {
-          console.log("ALL PUT TRANSACTIONS COMPLETE.");
-          resolve(true);
-      }
-
-      put_transaction.onerror = function () {
-          console.log("PROBLEM UPDATING RECORDS.")
-          resolve(false);
-      }
-
-      objectStore.put(record);
-    });
-  }
-}
-
-function delete_record(uid) {
-  if (db) {
-    const delete_transaction = db.transaction("artists", 
-    "readwrite");
-    const objectStore = delete_transaction.objectStore("artists");
-
-    return new Promise((resolve, reject) => {
-      delete_transaction.oncomplete = function () {
-          console.log("ALL DELETE TRANSACTIONS COMPLETE.");
-          resolve(true);
-      }
-
-      delete_transaction.onerror = function () {
-          console.log("PROBLEM DELETE RECORDS.")
-          resolve(false);
-      }
-
-      objectStore.delete(uid);
-    });
-  }
-}
-
-function get_all_records() {
-  console.log("Getting all records");
-  if (db) {
-    const get_transaction = db.transaction("artists", "readonly");
-    const objectStore = get_transaction.objectStore("artists");
-
-    return new Promise((resolve, reject) => {
-      get_transaction.oncomplete = function () {
-        console.log("ALL GET TRANSACTIONS COMPLETE.");
-      }
-
-      get_transaction.onerror = function () {
-        console.log("PROBLEM GETTING RECORDS.")
-      }
-
-      let request = objectStore.getAll();
-
-      request.onsuccess = function (event) {
-        console.log("got all records successfully");
-        resolve(event.target.result);
-      }
-    });
-  }
-}
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// End IndexedDB work
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+// Ben's IndexedDB 
+/**
+ * create_db(): creates the entire database upon install
+ * 
+ * insert_db(): inserts specified records into db
+ * 
+ * remove_db(): removes a specified record from the db
+ * 
+ * update_db(): updates specified record in db
+ * 
+ * get_all(): gets all records from db
+ * 
+ * get_record(): gets a single record from the db
+ * 
+ * delete_db(): completely wipes db [DEV only]
+ * 
+ **/
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
 
 function create_db() {
   const dbOpenRequest = indexedDB.open(dbName, 1);
@@ -328,6 +192,91 @@ function insert_db(data) {
   }
 }
 
+function remove_db(data) {
+  if(db) {
+    const insertTransaction = db.transaction('artists', 'readwrite');
+    const objectStore = insertTransaction.objectStore('artists');
+
+    console.log("DELETING: ", data);
+
+    return new Promise((resolve, reject) => {
+      insertTransaction.onerror = (event) => {
+        console.log("Error removing data from db.");
+        resolve(false);
+      }
+  
+      insertTransaction.oncomplete = (event) => {
+        console.log("Successfully removed data to db.");
+        resolve(true);
+      }
+  
+      data.forEach((uid) => {
+        console.log(uid);
+        const deleteRequest = objectStore.delete(uid);
+        // addRequest.onsuccess = (event) => {
+        //   console.log("Added new object (" + event.target.result + "), (" + artist.uid + ")");
+        // }
+      });
+    });
+  }
+}
+
+function update_db(data) {
+  if (db) {
+    const insertTransaction = db.transaction('artists', 'readwrite');
+    const objectStore = insertTransaction.objectStore('artists');
+    const request = objectStore.get(uid);
+
+    console.log("UPDATING: ", data);
+
+    return new Promise((resolve, reject) => {
+      insertTransaction.onerror = (event) => {
+        console.log("Error updating data in db.");
+        resolve(false);
+      }
+  
+      insertTransaction.oncomplete = (event) => {
+        console.log("Successfully updated data in db.");
+        resolve(true);
+      }
+  
+      const artist = request.result;
+      // artist.name = data.newname
+
+      const updateRequest = objectStore.put(uid);
+      requestUpdate.onerror = (event) => {
+        // Do something with the error
+        console.log("Error updating this single artist");
+      };
+      requestUpdate.onsuccess = (event) => {
+        // Success - the data is updated!
+        console.log("Successfully updated this single artist");
+      };
+    });
+  }
+}
+
+function get_record(uid) {
+  if (db) {
+    const getTransaction = db.transaction('artists');
+    const objectStore = getTransaction.objectStore('artists');
+    const request = objectStore.get(uid);
+
+    return new Promise((resolve, reject) => {
+      request.onerror = (event) => {
+        console.log("Failed to retrieve records from database.");
+        resolve(false);
+      }
+  
+      request.onsuccess = (event) => {
+        console.log("Successfully fetched record from database.");
+        let record = request.result;
+        resolve(record);
+      }
+    });
+  }
+}
+
 function get_all() {
   if (db) {
     const getTransaction = db.transaction('artists');
@@ -376,9 +325,9 @@ let freshStart = true;
 //  Status: SUCCESS
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.set({ color });
-  chrome.storage.sync.set({ currentUser });
+  // chrome.storage.sync.set({ currentUser });
   console.log('Default background color set to %cgreen', `color: ${color}`);
-  console.log('Default currentUser set to ', `user: ${currentUser}`);
+  // console.log('Default currentUser set to ', `user: ${currentUser}`);
 
   if (freshStart)
     delete_db();
@@ -392,12 +341,32 @@ chrome.runtime.onInstalled.addListener(() => {
 //  Action: Update currentUser if tab is a soundcloud link
 //  Status: SUCCESS
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.url && changeInfo.url.includes("soundcloud.com")) {
-    let currentUser = changeInfo.url.split("/")[3];
+  get_user(tab);
+});
+
+/** * * *
+ * Event Listener
+ * ...
+ * Event: user switches to a new tab
+ * Action: Get currentUser, if applicable
+ * Status: SUCCESS
+ */
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.tabs.get(activeInfo.tabId, ((tab) => {
+    get_user(tab);
+  }));
+});
+
+/**
+ * Auxilliary function to get current user from tab info
+ */
+function get_user(tab) {
+  if (tab.url && tab.url.includes("soundcloud.com")) {
+    let currentUser = tab.url.split("/")[3];
     chrome.storage.sync.set({ currentUser });
     console.log('Changed currentUser to ', `user: ${currentUser}`);
   }
-});
+}
 
 // Message Listener
 //  Event: popup.js sends message requesting database info 
@@ -420,5 +389,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       })
       return true;
     }
+
+    if (message.name === "delete") {
+      console.log("Received 'delete'");
+      remove_db([message.artist]).then((data) => {
+        console.log("Deleted artist");
+        sendResponse({resp: data});
+      })
+      return true;
+    }
   }
 );
+

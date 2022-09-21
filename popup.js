@@ -3,6 +3,7 @@ let changeColor = document.getElementById("changeColor");
 let changeUser = document.getElementById("currentUser");
 let getInfo = document.getElementById("userInfo");
 let getDB = document.getElementById("getDbInfo");
+let deleteArtist = document.getElementById("delete");
 
 // ************************
 // Google tutorial functions
@@ -70,6 +71,24 @@ getDB.addEventListener("click", async () => {
   });
 });
 
+/** * * *
+ * Event Listener
+ * ...
+ * Event: "delete" button clicked
+ * Action: Remove current Artist from DB
+ * Status: ?
+ */
+deleteArtist.addEventListener("click", async () => {
+  let [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  let currentUser = await chrome.storage.sync.get("currentUser");
+
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: removeArtist,
+    args: [currentUser]
+  });
+});
+
 
 // Message Listener
 //    Event: background.js sends message informing popup.js that the database is created
@@ -103,6 +122,18 @@ function getDbData() {
   });
 }
 
+/**
+ * Sends a message to service worker to remove the current artist from the database.
+ */
+function removeArtist(currentUser) {
+  console.log("trying to remove artist...");
+
+  chrome.runtime.sendMessage({name: "delete", artist: currentUser.currentUser}, (response) => {
+    console.log(response);
+    return true;
+  });
+}
+
 // getArtistInfo()
 //  :: Fetch artist info from webpage, build new object, and send to background.js for database.
 // Info
@@ -110,7 +141,7 @@ function getDbData() {
 function getArtistInfo(currentUser) {
   let artistObject = {};
 
-  // Set UID from currentUser
+  // TODO: Set UID from currentUser
   artistObject.uid = currentUser.currentUser;
 
   // Set name
@@ -118,9 +149,9 @@ function getArtistInfo(currentUser) {
 
   // Set artist stats (followers, following, track count)
   let infoStatsDOM = document.body.getElementsByClassName("infoStats__stat");
-  artistObject.followers = infoStatsDOM[0].getElementsByClassName("infoStats__value")[0].textContent;
-  artistObject.following = infoStatsDOM[1].getElementsByClassName("infoStats__value")[0].textContent;
-  artistObject.track_count = infoStatsDOM[2].getElementsByClassName("infoStats__value")[0].textContent;
+  artistObject.followers = Number(infoStatsDOM[0].getElementsByClassName("infoStats__value")[0].textContent);
+  artistObject.following = Number(infoStatsDOM[1].getElementsByClassName("infoStats__value")[0].textContent);
+  artistObject.track_count = Number(infoStatsDOM[2].getElementsByClassName("infoStats__value")[0].textContent);
 
   // Set date_added
   artistObject.date_added = (new Date()).toLocaleDateString('en-US');

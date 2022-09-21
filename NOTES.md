@@ -1,6 +1,20 @@
 # Development Notes
 
 
+### 9/21/22:
+
+ToDo:
+1. Fix insert:
+  1. ✅ Correct uid (can't be null, must equal URL)
+  2. ✅ Add stats as numbers, not strings
+  3. Check if already exists
+2. ✅ Delete artists from db
+  - Note: Current delete does no checks to make sure it makes sense
+3. Store database
+4. Update artist in db (test existing function)
+5. Display db info in UI
+
+
 ### 9/15/22:
 
 Successfully created & fetched all test data from the database! 
